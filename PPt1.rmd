@@ -1,0 +1,230 @@
+---
+title: "Project Presentation"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+require(tidyverse)
+require(lattice)
+dataset=read.csv('Parks.csv')
+
+dataset$date <- sapply(strsplit(as.character(Dataset$Date.and.Time), " "), "[", 1)
+#Dataset$Date<-as.factor(Dataset$Date)
+
+
+
+dataset
+```
+```{r}
+dataset$Attendance=as.numeric(gsub(",","",dataset$Attendance))
+dataset
+dataset%>%is.na()%>%colSums()
+sum(dataset%>%is.na()%>%rowSums()>0)
+
+
+```
+```{r}
+
+dataset$Attendance<-as.numeric(dataset$Attendance)
+typeof(dataset$Attendance)
+mean<-mean(dataset$Attendance,na.rm = TRUE)
+round(mean)
+
+
+
+
+```
+
+
+```{r}
+
+dataset<-dataset%>%mutate(Attendance=replace_na(Attendance, mean(Attendance, na.rm = TRUE)))
+dataset<-dataset%>%mutate(Attendance=round(Attendance))
+dataset%>%is.na()%>%colSums()
+```
+
+
+
+
+```{r}
+
+ave_Attend=dataset%>%group_by(Event.Type)%>%summarise(ave_Attendance=mean(Attendance))
+ave_Attend
+barchart(Event.Type~ave_Attendance, data=ave_Attend)
+```
+
+#2)New column=aging of the events.Attendance based on earlier events v/s recents events- which were the 10 events with maximum attendance (most populated) and 10 events with minimum attendance (least populated)
+```{r}
+today <- Sys.Date()
+today<-format(today,format="%m/%d/%Y")
+today
+Date1<-today
+Date2<-dataset$date
+
+dataset$Age<- as.Date(as.character(Date1), format="%m/%d/%Y")-
+                  as.Date(as.character(Date2), format="%m/%d/%Y")  
+dataset
+
+recent_Events<-head(dataset)
+recent_Events
+old_Events<-tail(dataset)
+old_Events
+
+```
+
+
+
+
+
+```{r}
+Age_of_Events<-as.numeric(dataset$Age)
+xyplot(Event.Type~(Age_of_Events),data=dataset)
+
+
+
+```
+#3)From which borough of New york city is the maximum and minimum attendance coming?
+```{r}
+ggplot(dataset, aes(x=Borough, y=Attendance)) + geom_point(size=4,shape=23,color="RED")+theme_bw()
+
+```
+#4)Total numbers of events by month - which month hit maximum number of events or which month hit minimum number of events?
+
+```{r}
+Date3<-dataset$Date
+Date3<-as.Date(Date3,format ="%m/%d/%Y")
+dataset$year <- as.numeric(format(Date3,'%Y'))
+
+Date4<-dataset$Date
+Date4<-as.Date(Date4,format ="%m/%d/%Y")
+dataset$month <- as.numeric(format(Date3,'%m'))
+dataset$month <- as.character(format(Date4,'%B'))
+
+dataset
+
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+dataset
+
+Event<-as.factor(dataset$Event.Type)
+Event<-as.numeric(Event)
+df<-dataset%>%count(month,'Event')
+df
+
+ggplot(data = df, aes(x = factor(month,levels=month.name), y = n)) +
+      geom_bar(stat = "identity", fill = "maroon") +
+      labs(title = "Total Number of Events in Month",
+           x = "Month", y = "No. of Events")+theme_classic()
+
+
+
+```
+
+6)What was the location type or unit with maximum attendance/minimum attendance?
+```{r}
+typeof(dataset$Attendance)
+dataset$Attendance<-as.numeric(dataset$Attendance)
+ave_attendance=dataset%>%group_by(LocationType)%>%summarise(ave_attend=as.numeric(mean(Attendance),na.rm=TRUE))
+ave_attendance
+ave_attend<-c(145.00,127.83347,169.46004,155.20000,89.82664,74.83333)
+pct <- round(ave_attend/sum(ave_attend)*100)
+
+lbls <- paste(ave_attendance$LocationType, pct)
+lbls <- paste(lbls,"%",sep="") 
+colors = c("red", "yellow", "green", "purple", "blue", "pink") 
+pie(ave_attendance$ave_attend, labels=lbls, col=colors, main="Distribution of Attendance by Location Type" )
+
+ 
+```
+```{r}
+
+histogram(~Attendance|as.factor(year),data=dataset,main="Attendance Distribution by Years")
+
+
+
+```
+#Attendance by age and Event.Type by age
+```{r}
+
+
+ggplot(data = ave_Attend) + 
+  geom_point(mapping = aes(x = Age, y = ave_Attendance,color=Event.Type,))+labs(x="Age_of_Events(Days)",y="Attendance")
+
+
+
+
+
+```
+#Which were the busiest Events
+```{r}
+dataset%>%select(Category,Attendance)%>%filter(Attendance>1000)%>%arrange(desc(Attendance))
+
+  
+```
+```{r}
+dataset1<-dataset%>%select(Attendance,Age)%>%filter(Age<334)
+dataset2<-dataset%>%select(Attendance,Age)%>%filter(Age>1150)
+dataset3<-rbind(dataset1,dataset2)
+dataset3
+ggplot(data = dataset3, aes(x = Age, y = Attendance)) +
+      geom_line(stat = "identity") +
+      labs(x = "Age", y = "Attendance")
+
+
+```
+
+```{r}
+
+data<-dataset%>%select(Attendance,year)%>%filter(year==2017)
+Total1<-mean(data$Attendance)
+round(Total1)
+data1<-dataset%>%select(Attendance,year)%>%filter(year==2018)
+Total2<-mean(data1$Attendance)
+round(Total2)
+data2<-dataset%>%select(Attendance,year)%>%filter(year==2019)
+Total3<-mean(data2$Attendance)
+round(Total3)
+Total<-sum(Total1,Total2,Total3)
+round(Total)
+
+percent<-(Total1/Total)*100
+round(percent)
+
+percent2<-(Total2/Total)*100
+round(percent2)
+
+percent3<-(Total3/Total)*100
+round(percent3)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
